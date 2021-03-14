@@ -7,7 +7,7 @@ Original from [epub-translator](https://github.com/Frully/epub-google-translate)
 ![test](./fixtures/result.png)
 
 ## Usage
-1. Fill your own keys in `tencentClientConfig`, applied from `https://cloud.tencent.com/product/tmt`
+1. Fill your own keys in `tencentClientConfig.ts`, applied from `https://cloud.tencent.com/product/tmt`
 
 2. Run
 ```

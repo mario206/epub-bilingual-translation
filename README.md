@@ -1,4 +1,4 @@
-# epub-translation
+# epub-translate
 Translate epub book while keeping its structor
 
 Original from [epub-translator](https://github.com/Frully/epub-google-translate)

@@ -1,5 +1,5 @@
-# epub-translate
-Translate epub book while keeping its structor
+# epub-bilingual-translation
+Translate epub books in a bilingual way
 
 Original from [epub-translator](https://github.com/Frully/epub-google-translate)
 

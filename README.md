@@ -14,7 +14,7 @@ Originally from [epub-translator](https://github.com/Frully/epub-google-translat
 node /lib/main.js [pathToEpubFile]
 ```
 
-## Similar projects
+## Similar projects/products
 + [epub-translator](https://github.com/sharplab/epub-translator)
 + [彩云小译](https://fanyi.caiyunapp.com/#/web)
 + [知云文献翻译](http://www.zhiyunwenxian.cn/)

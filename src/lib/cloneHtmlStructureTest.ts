@@ -1,8 +1,8 @@
 import * as fs from 'fs'
 import { cloneHtmlStructure } from './cloneHtmlStructure'
 
-const file = '/Users/mario/Desktop/epub-google-translate-master/fixtures/test.xhtml'
+const file = '/Users/mario/Desktop/Repository/epub-translate-private/fixtures/test.html'
 const content = fs.readFileSync(file, 'utf8')
 const result = cloneHtmlStructure(content)
 
-fs.writeFileSync('/Users/mario/Desktop/epub-google-translate-master/fixtures/result.xhtml', result)
+fs.writeFileSync('/Users/mario/Desktop/Repository/epub-translate-private/fixtures/result.html', result)

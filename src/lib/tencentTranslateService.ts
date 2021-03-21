@@ -4,6 +4,7 @@ import { TranslateInfo } from './translateInfo'
 const tencentcloud = require('tencentcloud-sdk-nodejs')
 
 const TmtClient = tencentcloud.tmt.v20180321.Client
+import * as cldrSegmentation from 'cldr-segmentation'
 import { clientConfig } from './tencentClientConfig'
 
 
@@ -12,9 +13,13 @@ const client = new TmtClient(clientConfig)
 const map = {}
 const QPS = 5
 const MAX_LENGTH = 2000
+const TEST_REQ = false
 
 function checkReqLimit(): Promise<any> {
   return new Promise((resolve) => {
+    if (TEST_REQ) {
+      return resolve()
+    }
     // @ts-ignore
     const timestamp = parseInt(new Date().getTime() / 1000, 10)
     if (map[timestamp] === undefined) {
@@ -33,20 +38,10 @@ function checkReqLimit(): Promise<any> {
 
 }
 
-export async function reqTranslate(sourceText: string): Promise<any> {
+let length = 0
+
+export async function reqTranslateBatch(texts: string[]) {
   await checkReqLimit()
-
-  console.log('[reqTencentTranslate]' + sourceText)
-
-  const lists = await reqTranslateBatch([sourceText])
-
-  return lists.length > 0 ? lists[0] : ''
-}
-
-
-export async function reqTranslateBatch(texts: string[]): Promise<any> {
-  await checkReqLimit()
-
   const params = {
     'Source': 'auto',
     'Target': 'zh',
@@ -55,6 +50,13 @@ export async function reqTranslateBatch(texts: string[]): Promise<any> {
   }
 
   let result = []
+
+  if (TEST_REQ) {
+    texts.forEach(str => length += str.length)
+    console.log('length = ' + length)
+    texts.forEach(str => result.push('##' + str + '##'))
+    return result
+  }
 
   await client.TextTranslateBatch(params).then(
     (data) => {
@@ -76,52 +78,62 @@ export async function reqTranslateBatch(texts: string[]): Promise<any> {
 
 export async function translateAll(infos: TranslateInfo[]) {
   await checkReqLimit()
-  if (infos.length > 0) {
-    let currIndex = 0
-    while (true) {
-      let currLength = 0
-      const textList = []
-      const textIndex = []
 
-      for (let j = currIndex; j < infos.length; ++j) {
-        const info = infos[j]
-        if (info.src.length > MAX_LENGTH) {
-          // todo 分割超过 2000 字的段落
-          console.error('info.src.length > 2000')
-          console.log(info.src)
-          currIndex = j + 1
-          continue
-        }
+  // 预处理下
+  const lineInfoArr = []
+  const lineIndexArr = []
 
-        if (currLength + info.src.length < MAX_LENGTH) {
-          textIndex.push(j)
-          textList.push(info.src)
-          currLength += info.src.length
-          currIndex = j + 1
-          continue
+  // tslint:disable-next-line:prefer-for-of
+  for (let i = 0; i < infos.length; ++i) {
+    const info = infos[i]
+    if (info.src.length <= MAX_LENGTH) {
+      lineInfoArr.push(info.src)
+      lineIndexArr.push(i)
+    } else {
+      const sentences = cldrSegmentation.sentenceSplit(info.src, cldrSegmentation.suppressions.en)
+      sentences.forEach((x) => {
+        if (x.length <= MAX_LENGTH) {
+          lineInfoArr.push(x)
+          lineIndexArr.push(i)
         } else {
-          currIndex = j + 1
-          break
+          // 分割完还超过MAX_LENGTH
+          console.error('[sentence too long]' + x)
         }
-      }
-
-      console.log(`reqTranslateBatch length ${currIndex}/${infos.length}`)
-      await reqTranslateBatch(textList).then((targets: string[]) => {
-        for (let k = 0; k < targets.length; ++k) {
-          if (k < textList.length) {
-            infos[textIndex[k]].dst = targets[k]
-          }
-        }
-      }, () => {
-        //
       })
+    }
+  }
 
-      if (currIndex >= infos.length) {
+
+  let currIndex = 0
+  while (true) {
+    let currLength = 0
+    const textList = []
+    const textIndex = []
+
+    for (let j = currIndex; j < lineInfoArr.length; ++j) {
+      if (currLength + lineInfoArr[j].length < MAX_LENGTH) {
+        textIndex.push(j)
+        textList.push(lineInfoArr[j])
+        currLength += lineInfoArr[j].length
+        currIndex = j + 1
+        continue
+      } else {
+        currIndex = j
         break
       }
     }
+
+    console.log(`translateAll length ${currIndex}/${lineInfoArr.length}`)
+
+    const targets = await reqTranslateBatch(textList)
+
+    for (let k = 0; k < targets.length; ++k) {
+      const index = lineIndexArr[textIndex[k]]
+      infos[index].dst += targets[k]
+    }
+    if (currIndex >= infos.length) {
+      break
+    }
   }
 }
-
-
 

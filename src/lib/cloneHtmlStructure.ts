@@ -1,5 +1,4 @@
 import { JSDOM } from 'jsdom'
-import { html2xhtml } from './html2xhtml'
 
 function formatText(text) {
   const lines = text.split('\n')
@@ -26,7 +25,7 @@ export function enumTextNodes(dom, root) {
   return textNodes
 }
 
-export function cloneHtmlStructure(html: string): string {
+export function cloneHtmlStructure(html: string): JSDOM {
   const dom = new JSDOM(html)
   const root = dom.window.document.querySelector('body')
 
@@ -35,12 +34,13 @@ export function cloneHtmlStructure(html: string): string {
 
   // 2.对{textNodes}中每个text对应的parentElement(A),向上遍历直到root，如果遇到{stopNode}中的类型的节点B则停止，将B加到表{clone}，如果遇不到，将(A)加到{toCloneElements}中。
   let toCloneElements = []
-  const StopNames = ['h', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li', 'span', 'div']
+  const StopNames = ['h', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li', 'span', 'div', 'a']
   textNodes.forEach((x) => {
     const elem = x.parentElement
     if (isValidText(x.nodeValue)) {
       if (elem && StopNames.includes(elem.nodeName.toLowerCase())) {
         toCloneElements.push(elem)
+        // console.log('[2]' + x.nodeValue)
       }
     }
   })
@@ -84,6 +84,7 @@ export function cloneHtmlStructure(html: string): string {
   clonedElems.forEach((cloneRoot) => {
     const textnodes = enumTextNodes(dom, cloneRoot)
     textnodes.forEach((textnode) => {
+      // console.log('[6]' + textnode.nodeValue)
       textnode.nodeValue = formatText(textnode.nodeValue)
       let e = textnode.parentElement
       e.classList.add(classTag)
@@ -91,6 +92,7 @@ export function cloneHtmlStructure(html: string): string {
         e.classList.add(classTag)
         e = e.parentElement
       }
+      cloneRoot.classList.add(classTag)
     })
 
     function removeChildWithoutClass(parent) {
@@ -115,8 +117,11 @@ export function cloneHtmlStructure(html: string): string {
       cloneRoot.textContent = formatText(cloneRoot.textContent)  // 把p中的所有text合并到p上
     }
   })
+
+  return dom
+  /*
   const dst = dom.serialize()
   const xhtml = html2xhtml(dst)
   return xhtml
-
+*/
 }

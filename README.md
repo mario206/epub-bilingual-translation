@@ -1,7 +1,7 @@
 # epub-bilingual-translation
 Translate epub books in a bilingual way
 
-Original from [epub-translator](https://github.com/Frully/epub-google-translate)
+Originally from [epub-translator](https://github.com/Frully/epub-google-translate)
 
 ## demo
 ![test](./fixtures/result.png)
